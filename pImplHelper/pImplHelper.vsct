@@ -1,0 +1,89 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <Extern href="stdidcmd.h"/>
+
+  <Extern href="vsshlids.h"/>
+
+  <Commands package="guidpImplHelperPkg">
+    <Menus>
+      <!-- 2. サブメニューを表示 -->
+      <Menu guid="guidpImplHelperCmdSet" id="pImplSubMenu" priority="0x0600" type="Menu">
+        <Parent guid="guidpImplHelperCmdSet" id="pImplContextGroup"/>
+        <Strings>
+          <ButtonText>pImpl Helper</ButtonText>
+          <CommandName>pImpl Helper</CommandName>
+        </Strings>
+      </Menu>
+    </Menus>
+    
+    <Groups>
+      <!-- 1. コンテキストメニューにサブメニューを表示する領域を確保 -->
+      <Group guid="guidpImplHelperCmdSet" id="pImplContextGroup" priority="0x0600">
+        <!--Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/-->
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
+      </Group>
+      <!-- 3. サブメニュー以下にコマンドボタンを表示する領域を確保 -->
+      <Group guid="guidpImplHelperCmdSet" id="pImplSubContextGroup" priority="0x0600">
+        <Parent guid="guidpImplHelperCmdSet" id="pImplSubMenu"/>
+      </Group>
+      
+      <!-- 2-1. コンテキストメニューにボタンを表示する領域を確保 -->
+      <Group guid="guidpImplHelperCmdSet" id="pImplProjContextGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/>
+      </Group>
+      
+    </Groups>
+
+    <Buttons>
+      
+      <!-- 2-2. コンテキストメニューにボタンを表示 -->
+      <Button guid="guidpImplHelperCmdSet" id="cmdidPImplHelper_NewClass" priority="0x0600" type="Button">
+        <Parent guid="guidpImplHelperCmdSet" id="pImplProjContextGroup" />
+        <Icon guid="guidImages" id="bmpPic1" />
+        <Strings>
+          <ButtonText>Generate new pImpl class</ButtonText>
+        </Strings>
+      </Button>
+
+      <!-- 4. サブメニュー以下にコマンドボタンを表示 -->
+      <Button guid="guidpImplHelperCmdSet" id="cmdidPImplHelper_BindMethod" priority="0x0600" type="Button">
+        <Parent guid="guidpImplHelperCmdSet" id="pImplSubContextGroup" />
+        <Icon guid="guidImages" id="bmpPic1" />
+        <Strings>
+          <ButtonText>Bind selecting methods</ButtonText>
+        </Strings>
+      </Button>
+    </Buttons>
+   
+    <Bitmaps>
+      <Bitmap guid="guidImages" href="Resources\Images.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows"/>
+    </Bitmaps>
+ 
+  </Commands>
+
+  <Symbols>
+    <!-- This is the package guid. -->
+    <GuidSymbol name="guidpImplHelperPkg" value="{bba77246-ea50-4caa-bb2e-21f5507584e6}" />
+    
+    <!-- This is the guid used to group the menu commands together -->
+    <GuidSymbol name="guidpImplHelperCmdSet" value="{f74f94a7-0f1a-41d1-9f92-57238847ef2d}">
+      <IDSymbol name="pImplContextGroup" value="0x1020" />
+      <IDSymbol name="pImplProjContextGroup" value="0x1021" />
+      <IDSymbol name="pImplSubContextGroup" value="0x1022" />
+      <IDSymbol name="pImplSubMenu" value="0x1023" />
+      <IDSymbol name="cmdidPImplHelper_NewClass" value="0x0100" />
+      <IDSymbol name="cmdidPImplHelper_BindMethod" value="0x0101" />
+    </GuidSymbol>
+    
+    <GuidSymbol name="guidImages" value="{de0567d3-c8c2-42d9-80ce-c99f6aa30ff5}" >
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  </Symbols>
+
+</CommandTable>
