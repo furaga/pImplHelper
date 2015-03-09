@@ -16,11 +16,39 @@ namespace Company.pImplHelper
         //-----------------------------------------------------------------------
 
         // ビルド時に scripts/pimpl.py が Debug(Release)直下にコピーされる 
-        const string pythonPath = "scripts/pimpl.py";
-        
+        static string pythonPath
+        {
+            get
+            {
+#if DEBUG
+                string path = "scripts/pimpl.py";
+#else
+                string root = System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                string path = System.IO.Path.Combine(root, "pImplHelper", "scripts/pimpl.py");
+#endif
+                return path;
+            }
+        }
+
+        static ScriptEngine _python = null;
+        static ScriptEngine python
+        {
+            get
+            {
+                if (_python == null)
+                {
+                    _python = Python.CreateEngine();
+                    var paths = _python.GetSearchPaths();
+                    paths.Add(System.IO.Path.GetDirectoryName(pythonPath));
+                    paths.Add(@"C:\Program Files (x86)\IronPython 2.7\Lib");
+                    _python.SetSearchPaths(paths);
+                }
+                return _python;
+            }
+        }
+
         static List<CodeTemplate> CreatePImplClass_python(string className)
         {
-            var python = Python.CreateEngine();
             dynamic pimpl = python.ExecuteFile(pythonPath);
             var res = pimpl.gen_new_class(className);
             List<CodeTemplate> ls = new List<CodeTemplate>()
@@ -33,11 +61,18 @@ namespace Company.pImplHelper
 
         static bool BindMethod_python(string header, string cpp, int selectStart, int selectEnd, out string outheader, out string outcpp)
         {
-            var python = Python.CreateEngine();
-            dynamic pimpl = python.ExecuteFile(pythonPath);
-            var header_cpp = pimpl.bind_pimpl_method_from_selection(header, cpp, selectStart, selectEnd);
-            outheader = header_cpp[0];
-            outcpp = header_cpp[1];
+            try
+            {
+                dynamic pimpl = python.ExecuteFile(pythonPath);
+                var header_cpp = pimpl.bind_pimpl_method_from_selection(header, cpp, selectStart, selectEnd);
+                outheader = header_cpp[0];
+                outcpp = header_cpp[1];
+            }
+            catch (Exception ex)
+            {
+                outheader = header;
+                outcpp = cpp;
+            }
             return true;
         }
         
