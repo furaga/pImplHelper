@@ -55,7 +55,7 @@ namespace pImplHelperOffline
 
                 psInfo.FileName = "python.exe"; // 実行するファイル
                 // psInfo.Arguments = "pimpl.py new_class";
-                psInfo.Arguments = "pimpl.py wrap_method tmp/__dummy__.h tmp/__dummy__.cpp " + selectStart + " " + selectEnd;
+                psInfo.Arguments = "wrap_method.py tmp/__dummy__.h tmp/__dummy__.cpp " + selectStart + " " + selectEnd;
                 psInfo.CreateNoWindow = true; // コンソール・ウィンドウを開かない
                 psInfo.UseShellExecute = false; // シェル機能を使用しない
                 psInfo.RedirectStandardOutput = true; // 標準出力をリダイレクト

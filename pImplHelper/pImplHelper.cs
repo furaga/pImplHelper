@@ -16,21 +16,7 @@ namespace Company.pImplHelper
         //-----------------------------------------------------------------------
 
         // ビルド時に scripts/pimpl.py が Debug(Release)直下にコピーされる 
-        static string pythonPath
-        {
-            get
-            {
-#if DEBUG
-                string path = "scripts/pimpl.py";
-#else
-                string root = System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                string path = System.IO.Path.Combine(root, "pImplHelper", "scripts/pimpl.py");
-#endif
-                return path;
-            }
-        }
-        // ビルド時に scripts/pimpl.py が Debug(Release)直下にコピーされる 
-        static string gen_class_pythonPath
+        static string gen_class_scriptPath
         {
             get
             {
@@ -47,7 +33,7 @@ namespace Company.pImplHelper
         static List<CodeTemplate> CreatePImplClass_python(string className)
         {
             var python = Python.CreateEngine();
-            dynamic pimpl = python.ExecuteFile(gen_class_pythonPath);
+            dynamic pimpl = python.ExecuteFile(gen_class_scriptPath);
             var res = pimpl.gen_new_class(className);
             List<CodeTemplate> ls = new List<CodeTemplate>()
             {
@@ -63,7 +49,7 @@ namespace Company.pImplHelper
             try
             {
                 // todo: cpythonをかわりに使う。ironpythonはlibclang.dllの関数を実行しようとするとnotimplementederrorがでる
-                string rootDir = System.IO.Path.GetDirectoryName(pythonPath);
+                string rootDir = System.IO.Path.GetDirectoryName(gen_class_scriptPath);
                 System.IO.Directory.CreateDirectory(System.IO.Path.Combine(rootDir, "tmp"));
                 System.IO.File.WriteAllText(System.IO.Path.Combine(rootDir, "tmp", "__dummy__.h"), header);
                 System.IO.File.WriteAllText(System.IO.Path.Combine(rootDir, "tmp", "__dummy__.cpp"), cpp);
@@ -72,7 +58,7 @@ namespace Company.pImplHelper
 
                 psInfo.FileName = "python.exe"; // 実行するファイル
                 // psInfo.Arguments = "pimpl.py new_class";
-                psInfo.Arguments = "pimpl.py wrap_method tmp/__dummy__.h tmp/__dummy__.cpp " + selectStart + " " + selectEnd;
+                psInfo.Arguments = "wrap_method.py tmp/__dummy__.h tmp/__dummy__.cpp " + selectStart + " " + selectEnd;
                 psInfo.CreateNoWindow = true; // コンソール・ウィンドウを開かない
                 psInfo.UseShellExecute = false; // シェル機能を使用しない
                 psInfo.RedirectStandardOutput = true; // 標準出力をリダイレクト

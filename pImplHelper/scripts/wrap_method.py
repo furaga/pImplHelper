@@ -8,86 +8,6 @@ from clang.cindex import TranslationUnit
 from clang.cindex import TypeKind
 
 #################################################################
-# 新規pImplクラスの生成
-#################################################################
-
-def gen_new_class(class_name):
-	header_name_template = """<%ClassName%>.h"""
-	header_code_template = """#pragma once
-
-class <%ClassName%>
-{
-public:
-	<%ClassName%>();
-	~<%ClassName%>();
-	void f();
-private:
-	class Impl;
-	Impl* pImpl;
-};
-"""
-	cpp_name_template = """<%ClassName%>.cpp"""
-	cpp_code_template = """#include "<%ClassName%>.h"
-#include <stdio.h>
-/*
-How to use:
-#include "<%ClassName%>.h"
-int main()
-{
-	<%ClassName%>* inst = new <%ClassName%>();
-	inst->f();
-	delete inst;
-	inst = nullptr;
-
-	return 0;
-}
-*/
-
-class <%ClassName%>::Impl{
-	friend <%ClassName%>;
-	<%ClassName%>* parent;
-public:
-	Impl()
-	{
-		printf("create <%ClassName%>\\n");
-	}
-	~Impl()
-	{
-		printf("delete <%ClassName%>\\n");
-	}
-	void SetParent(<%ClassName%>* p)
-	{
-		this->parent = p;
-	}
-	void f()
-	{
-		printf("<%ClassName%>::f()\\n");
-	}
-};
-
-<%ClassName%>::<%ClassName%>()
-{
-	pImpl = new <%ClassName%>::Impl();
-	pImpl->SetParent(this);
-}
-<%ClassName%>::~<%ClassName%>()
-{
-	if (pImpl != nullptr)
-		delete pImpl;
-	pImpl = nullptr;
-}
-void <%ClassName%>::f()
-{
-	pImpl->f();
-}"""
-	header_name = header_name_template.replace('<%ClassName%>', class_name)
-	header_code = header_code_template.replace('<%ClassName%>', class_name)
-	cpp_name = cpp_name_template.replace('<%ClassName%>', class_name)
-	cpp_code = cpp_code_template.replace('<%ClassName%>', class_name)
-	return (header_name, header_code, cpp_name, cpp_code)
-
-
-#################################################################
 # ::Implクラス内のpublic関数を元クラスにバインド
 #################################################################
 
@@ -322,7 +242,7 @@ def gen_cpp_wrap_code(tu, klass, methods, code):
 				new_code += '}'
 	return (new_code, insert_pos)
 
-def bind_pimpl_method_from_selection(header, cpp, sel_start, sel_end):
+def from_selection(header, cpp, sel_start, sel_end):
 	out_header = header
 	out_cpp = cpp
 	name = '__dummy__.cpp'
@@ -344,6 +264,7 @@ def bind_pimpl_method_from_selection(header, cpp, sel_start, sel_end):
 	out_cpp = out_cpp[:cpp_pos] + cpp_text + out_cpp[cpp_pos:]
 	return (out_header, out_cpp)
 
+# for debug
 def print_nodes(nodes, depth):
 	for n in nodes:
 		if isinstance(n.lexical_parent, type(None)):
@@ -352,37 +273,19 @@ def print_nodes(nodes, depth):
 			print ('-' * depth) + str((n.kind, n.lexical_parent.displayname, n.semantic_parent.displayname, n.spelling, n.displayname, n.extent.start.offset, n.extent.end.offset))
 		print_nodes(list(n.get_children()), depth + 1)
 
-#################################################################
-# 生のクラスをpImplクラスに持っていく
-#################################################################
-
-# 全てのメソッドの定義をクラス宣言内に入れて、それを::Implとする。
-# 上の::ImplのBind先のクラス宣言を作ってheaderに追加
-
-def make_pImpl(header, cpp):
-	pass
-
-#################################################################
-# pImplクラスを普通のクラスに変換
-#################################################################
-
-def make_non_pImpl(header, cpp):
-	pass
-
-
-if len(sys.argv) == 2 and sys.argv[1] == 'gen_class':
-		pass
-
-if len(sys.argv) == 6 and sys.argv[1] == 'wrap_method':	
-	f = open(sys.argv[2])
+if len(sys.argv) == 5:	
+	f = open(sys.argv[1])
 	header = f.read() 
 	f.close()
-	f = open(sys.argv[3])
+
+	f = open(sys.argv[2])
 	cpp = f.read() 
 	f.close()
-	sel_start = int(sys.argv[4])
-	sel_end = int(sys.argv[5])
-	res = bind_pimpl_method_from_selection(header, cpp, sel_start, sel_end)
+
+	sel_start = int(sys.argv[3])
+	sel_end = int(sys.argv[4])
+	res = from_selection(header, cpp, sel_start, sel_end)
+
 	print '*' * 40
 	print res[0]
 	print '*' * 40
