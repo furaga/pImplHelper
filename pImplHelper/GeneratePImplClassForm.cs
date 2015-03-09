@@ -69,5 +69,13 @@ namespace Company.pImplHelper
                 cppTextbox.Text = CppPath;
             }
         }
+
+        private void classNameTextbox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Return)
+            {
+                OKButton_Click(null, null);
+            }
+        }
     }
 }

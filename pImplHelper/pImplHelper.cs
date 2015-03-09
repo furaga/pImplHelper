@@ -29,27 +29,25 @@ namespace Company.pImplHelper
                 return path;
             }
         }
-
-        static ScriptEngine _python = null;
-        static ScriptEngine python
+        // ビルド時に scripts/pimpl.py が Debug(Release)直下にコピーされる 
+        static string gen_class_pythonPath
         {
             get
             {
-                if (_python == null)
-                {
-                    _python = Python.CreateEngine();
-                    var paths = _python.GetSearchPaths();
-                    paths.Add(System.IO.Path.GetDirectoryName(pythonPath));
-                    paths.Add(@"C:\Program Files (x86)\IronPython 2.7\Lib");
-                    _python.SetSearchPaths(paths);
-                }
-                return _python;
+#if DEBUG
+                string path = "scripts/gen_class.py";
+#else
+                string root = System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                string path = System.IO.Path.Combine(root, "pImplHelper", "scripts/gen_class.py");
+#endif
+                return path;
             }
         }
 
         static List<CodeTemplate> CreatePImplClass_python(string className)
         {
-            dynamic pimpl = python.ExecuteFile(pythonPath);
+            var python = Python.CreateEngine();
+            dynamic pimpl = python.ExecuteFile(gen_class_pythonPath);
             var res = pimpl.gen_new_class(className);
             List<CodeTemplate> ls = new List<CodeTemplate>()
             {
@@ -59,14 +57,51 @@ namespace Company.pImplHelper
             return ls;
         }
 
-        static bool BindMethod_python(string header, string cpp, int selectStart, int selectEnd, out string outheader, out string outcpp)
+        static bool WrapMethod_python(string header, string cpp, int selectStart, int selectEnd, out string outheader, out string outcpp)
         {
+            outheader = outcpp = "";
             try
             {
-                dynamic pimpl = python.ExecuteFile(pythonPath);
-                var header_cpp = pimpl.bind_pimpl_method_from_selection(header, cpp, selectStart, selectEnd);
-                outheader = header_cpp[0];
-                outcpp = header_cpp[1];
+                // todo: cpythonをかわりに使う。ironpythonはlibclang.dllの関数を実行しようとするとnotimplementederrorがでる
+                string rootDir = System.IO.Path.GetDirectoryName(pythonPath);
+                System.IO.Directory.CreateDirectory(System.IO.Path.Combine(rootDir, "tmp"));
+                System.IO.File.WriteAllText(System.IO.Path.Combine(rootDir, "tmp", "__dummy__.h"), header);
+                System.IO.File.WriteAllText(System.IO.Path.Combine(rootDir, "tmp", "__dummy__.cpp"), cpp);
+
+                System.Diagnostics.ProcessStartInfo psInfo = new System.Diagnostics.ProcessStartInfo();
+
+                psInfo.FileName = "python.exe"; // 実行するファイル
+                // psInfo.Arguments = "pimpl.py new_class";
+                psInfo.Arguments = "pimpl.py wrap_method tmp/__dummy__.h tmp/__dummy__.cpp " + selectStart + " " + selectEnd;
+                psInfo.CreateNoWindow = true; // コンソール・ウィンドウを開かない
+                psInfo.UseShellExecute = false; // シェル機能を使用しない
+                psInfo.RedirectStandardOutput = true; // 標準出力をリダイレクト
+                psInfo.WorkingDirectory = rootDir;
+                System.Diagnostics.Process p = System.Diagnostics.Process.Start(psInfo); // アプリの実行開始
+                string output = p.StandardOutput.ReadToEnd(); // 標準出力の読み取り
+
+                List<string> snippets = new List<string>();
+                string snip = "";
+                const string splitLine = "****************************************"; // "*" * 40
+                foreach (var _line in output.Split('\n'))
+                {
+                    var line = _line.TrimEnd();
+                    if (line == splitLine)
+                    {
+                        snippets.Add(snip);
+                        snip = "";
+                    }
+                    else
+                    {
+                        snip += line + "\n";
+                    }
+                }
+
+                if (snippets.Count >= 2)
+                {
+                    outheader = snippets[snippets.Count - 2];
+                    outcpp = snippets[snippets.Count - 1];
+                }
             }
             catch (Exception ex)
             {
@@ -80,7 +115,7 @@ namespace Company.pImplHelper
         // 新規クラスの生成
         //-----------------------------------------------------------------------
 
-        public static void GenerateNewClass()
+        public static void GenerateClass()
         {
             if (VSInfo.DTE2 == null)
             {
@@ -175,7 +210,7 @@ namespace Company.pImplHelper
         // メソッドのバインド
         //-----------------------------------------------------------------------
 
-        public static bool BindMethod()
+        public static bool WrapMethod()
         {
             // カーソル取得
             int selectStart, selectEnd;
@@ -199,7 +234,7 @@ namespace Company.pImplHelper
             header = header.Replace("\r\n", "\n");
             cpp = cpp.Replace("\r\n", "\n");
             string outheader, outcpp;
-            bool res = BindMethod_python(header, cpp, selectStart, selectEnd, out outheader, out outcpp);
+            bool res = WrapMethod_python(header, cpp, selectStart, selectEnd, out outheader, out outcpp);
             if (res == false)
                 return false;
 

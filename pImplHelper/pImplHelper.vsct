@@ -51,7 +51,7 @@
         <Parent guid="guidpImplHelperCmdSet" id="pImplSubContextGroup" />
         <Icon guid="guidImages" id="bmpPic1" />
         <Strings>
-          <ButtonText>Bind selecting methods</ButtonText>
+          <ButtonText>Wrap selecting methods</ButtonText>
         </Strings>
       </Button>
     </Buttons>

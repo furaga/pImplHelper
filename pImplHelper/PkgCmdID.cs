@@ -6,7 +6,7 @@ namespace Company.pImplHelper
 {
     static class PkgCmdIDList
     {
-        public const uint cmdidPImplHelper_NewClass = 0x100;
-        public const uint cmdidPImplHelper_BindMethod = 0x101;
+        public const uint cmdidPImplHelper_GenClass = 0x100;
+        public const uint cmdidPImplHelper_WrapMethod = 0x101;
     };
 }

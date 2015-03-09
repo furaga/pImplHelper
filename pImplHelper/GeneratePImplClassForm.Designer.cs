@@ -46,6 +46,7 @@
             this.classNameTextbox.TabIndex = 0;
             this.classNameTextbox.Text = "NewClass";
             this.classNameTextbox.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
+            this.classNameTextbox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.classNameTextbox_KeyDown);
             // 
             // label1
             // 
