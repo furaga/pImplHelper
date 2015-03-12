@@ -17,6 +17,7 @@ protected:
 	int ff() {
 		return 3;
 	}
+	void f(int x, int y);
 private:
 	int fib() {
 		return 0;

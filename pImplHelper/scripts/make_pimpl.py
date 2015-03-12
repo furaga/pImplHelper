@@ -2,6 +2,7 @@
 import gc
 import sys
 import traceback
+import wrap_method
 from clang.cindex import Index, File, Cursor, SourceRange, SourceLocation
 from clang.cindex import CursorKind
 from clang.cindex import TranslationUnit
@@ -70,15 +71,6 @@ def get_private_field_ranges(klass, code):
 			if get_accessor_type(prev_accessor, code, 'private:') == 'private:':
 				pri_field_ranges.append((n.extent.start.offset, n.extent.end.offset))
 	return pri_field_ranges
-
-method_kinds = {
-	CursorKind.CONSTRUCTOR, 
-	CursorKind.DESTRUCTOR, 
-	CursorKind.CXX_METHOD,
-	CursorKind.FUNCTION_DECL,
-	CursorKind.FUNCTION_TEMPLATE,
-	CursorKind.CONVERSION_FUNCTION, 
-}
 
 def get_arg_types(arg_ranges, code):
 	types = []
@@ -210,24 +202,26 @@ public:
 	impl_code = impl_code.replace('<%ClassName%>', klass.spelling.strip())
 
 	
+	remove_ranges = []
+
 	#
 	# privateフィールドを::Implクラスにコピペ
 	#
 	pri_ranges = get_private_field_ranges(klass, code)
-
-	# cut
-	for r in reversed(pri_ranges):
-		outheader = outheader[:r[0]] + outheader[r[1]:]
-
-	# paste
+	for r in remove_ranges:
+		remove_ranges.append(r)
 	for r in pri_ranges:
-		private_field += code[r[0]:r[1]].strip() + '\n'
+		private_field += code[r[0]:r[1]].strip() + ';\n'
 
 	
 	#
 	# public, protectedフィールドは変数・関数宣言はそのまま。関数定義は::Implにコピペして、元々のコード片は宣言で置き換える
 	#
+
 	method_accessors = get_method_accessors(klass, code)
+
+	for (m, _) in method_accessors:
+		remove_ranges.append((m.extent.start.offset, m.extent.end.offset))
 
 	m2i_ls = [(m, m.extent.start.offset) for (m, _) in method_accessors]
 	m2i = {}
@@ -278,6 +272,7 @@ public:
 						protected_field_snips[str(m)] = protected_field_snips[str(m)] + def_code
 					if acc == 'private:':
 						private_field_snips[str(m)] = private_field_snips[str(m)] + def_code
+					remove_ranges.append((n.extent.start.offset, n.extent.end.offset))
 
 	for snip in sorted(public_field_snips.items(), key=lambda x: m2i[x[0]]):
 		public_field += '\t' + snip[1].strip() + '\n'
@@ -296,11 +291,42 @@ public:
 	# todo: headerのクラス定義から実装を削除
 	# tood: グローバル関数からクラス関数の定義を削除
 
+	for r in sorted(remove_ranges, key = lambda _r: -_r[0]):
+		if r[0] < len(header):
+			outheader = outheader[:r[0]] + outheader[r[1]:]
+		else:
+			outcpp = outcpp[:r[0] - len(header) - 1] + outcpp[r[1] - len(header) - 1:]
+
+	_outheader = ""
+	for line in outheader.split('\n'):
+		if len(line.strip()) <= 0 or line.strip() == ';':
+			continue
+		_outheader += line + '\n'
+	outheader = _outheader
+	_p = outheader.find('{') + 1
+	outheader = outheader[:_p] + """
+	class Impl;
+	std::unique_ptr<Impl> pImpl;""" + outheader[_p:]
+	
+	outcpp = outcpp.strip() + '\n'
+	p = outcpp.rfind('#include ')
+	p = outcpp.find('\n', p) + 1
+	outcpp = outcpp[:p] + '\n' + impl_code + outcpp[p:]
+
 	print '-' * 40
-	print impl_code
+	print outheader
+	print '=' * 40
+	print outcpp
+	print '=' * 40
+
+	res = wrap_method.from_selection(outheader, outcpp, 0, len(outcpp))
+#	print '-' * 40
+#	print impl_code
 	print '-' * 40
-#	print outheader
-#	print '=' * 40
-	print [n[0].spelling for n in undef_methods]
+	print res[0]
+	print '=' * 40
+	print res[1]
+	print '=' * 40
+#	print [n[0].spelling for n in undef_methods]
 
 	return (outheader, outcpp)

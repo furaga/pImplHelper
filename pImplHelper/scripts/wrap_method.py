@@ -119,7 +119,7 @@ def is_same_method(m1, m2, check_class, code):
 		return True
 	return False
 	
-def gen_header_wrap_code(tu, klass, methods, code):
+def gen_header_wrap_code(tu, klass, methods, m2a, code):
 	parent = klass.semantic_parent
 	if parent is None:
 		return ("", -1)
@@ -130,7 +130,7 @@ def gen_header_wrap_code(tu, klass, methods, code):
 	parent_nodes = list(parent.get_children())
 	for n in parent_nodes:
 		if n.kind == CursorKind.CXX_ACCESS_SPEC_DECL:
-			if accessor == 'public:' or accessor == 'protected:':
+			if accessor == 'public:':
 				insert_pos = n.extent.start.offset
 				break
 			accessor = code[n.extent.start.offset:n.extent.end.offset].strip()
@@ -219,16 +219,13 @@ def gen_cpp_wrap_code(tu, klass, methods, code):
 		arg_names_code = ', '.join(get_arg_names(arg_ranges, code))
 		if m.kind == CursorKind.CONSTRUCTOR:
 			new_code += '\n' + class_name + '::' + class_name + '(' + arg_type_names_code + ')\n'
+			new_code += '	: pImpl(new ' + class_name + '::Impl(' + arg_names_code + '))\n'
 			new_code += '{\n'
-			new_code += '	pImpl = new ' + class_name + '::Impl(' + arg_names_code + ');\n'
 			new_code += '	pImpl->SetParent(this);\n'
 			new_code += '}\n'
 		elif m.kind == CursorKind.DESTRUCTOR:
 			new_code += '\n' + class_name + '::~' + class_name + '(' + arg_type_names_code + ')\n'
 			new_code += '{\n'
-			new_code += '	if (pImpl != nullptr)\n'
-			new_code += '		delete pImpl;\n'
-			new_code += '	pImpl = nullptr;\n'
 			new_code += '}\n'
 		else:
 			ret_info = get_ret_info(m, code)
