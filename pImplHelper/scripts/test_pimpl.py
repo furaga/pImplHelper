@@ -3,7 +3,7 @@ import unittest
 import gen_class
 import wrap_method
 import make_pimpl
-import make_unpimpl
+import make_nonpimpl
 import sys
 import difflib
 class Input(object):
@@ -30,8 +30,10 @@ class Test(unittest.TestCase):
 		res = gen_class.gen_new_class('SampleKlass')
 		assert res[0] == 'SampleKlass.h'
 		assert len(res[1]) > 0
+		assert 'class Impl;' in res[1]
 		assert res[2] == 'SampleKlass.cpp'
 		assert len(res[3]) > 0
+		assert 'class SampleKlass::Impl' in res[3]
 
 	###################################################################333
 	# test: wrap_method
@@ -56,17 +58,22 @@ class Test(unittest.TestCase):
 	###################################################################333
 	def test_make_pimpl(self):
 		(outheader, outcpp) = make_pimpl.convert(self.input_nonpimpl.header, self.input_nonpimpl.cpp)
-#		assert ('class Impl;' in outheader)
-#		assert ('::Impl' in outcpp)
+		# print '*' * 40
+		# print outheader
+		# print '*' * 40
+		# print outcpp
+		# print '/' * 40
+		assert ('class Impl;' in outheader)
+		assert ('::Impl' in outcpp)
 		pass
 
 	###################################################################333
-	# test: make unpimpl
+	# test: make nonpimpl
 	###################################################################333
-	def test_make_unpimpl(self):
-		(outheader, outcpp) = make_unpimpl.convert(self.input.header, self.input.cpp)
-		# assert not ('class Impl;' in outheader)
-		# assert not ('::Impl' in outcpp)
+	def test_make_nonpimpl(self):
+		(outheader, outcpp) = make_nonpimpl.convert(self.input.header, self.input.cpp)
+		assert not ('class Impl;' in outheader)
+		assert not ('::Impl' in outcpp)
 		pass
 
 def print_diff(a, b):
