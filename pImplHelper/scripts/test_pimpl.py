@@ -1,6 +1,9 @@
 # coding: UTF-8
 import unittest
-import pimpl
+import gen_class
+import wrap_method
+import make_pimpl
+import make_unpimpl
 import sys
 import difflib
 class Input(object):
@@ -15,20 +18,26 @@ class Input(object):
 class Test(unittest.TestCase):
 	def setUp(self):
 		self.input = Input('TestCodes/SampleClass.h', 'TestCodes/SampleClass.cpp')
+		self.input_nonpimpl = Input('TestCodes/SampleClass_nonpimpl.h', 'TestCodes/SampleClass_nonpimpl.cpp')
 		
 	def teadDown(self):
 		pass
 	
+	###################################################################333
+	# test: gen_class
+	###################################################################333
 	def test_gen_new_class(self):
-		res = pimpl.gen_new_class('SampleKlass')
+		res = gen_class.gen_new_class('SampleKlass')
 		assert res[0] == 'SampleKlass.h'
 		assert len(res[1]) > 0
 		assert res[2] == 'SampleKlass.cpp'
 		assert len(res[3]) > 0
 
-	def test_bind_pimpl_method_from_selection(self):
-#	def test_bind_pimpl_method_from_selection(header, cpp, sel_start, sel_end):
-		(header, cpp) = pimpl.bind_pimpl_method_from_selection(
+	###################################################################333
+	# test: wrap_method
+	###################################################################333
+	def test_from_selection(self):
+		(header, cpp) = wrap_method.from_selection(
 			self.input.header, 
 			self.input.cpp, 
 			0,
@@ -42,6 +51,24 @@ class Test(unittest.TestCase):
 		assert len(cminus) <= 0, ("len", len(mminus))
 		assert len(cplus) == 4, ("len", len(mplus))
 		
+	###################################################################333
+	# test: make pimpl
+	###################################################################333
+	def test_make_pimpl(self):
+		(outheader, outcpp) = make_pimpl.convert(self.input_nonpimpl.header, self.input_nonpimpl.cpp)
+#		assert ('class Impl;' in outheader)
+#		assert ('::Impl' in outcpp)
+		pass
+
+	###################################################################333
+	# test: make unpimpl
+	###################################################################333
+	def test_make_unpimpl(self):
+		(outheader, outcpp) = make_unpimpl.convert(self.input.header, self.input.cpp)
+		# assert not ('class Impl;' in outheader)
+		# assert not ('::Impl' in outcpp)
+		pass
+
 def print_diff(a, b):
 	diff = difflib.unified_diff(a.splitlines(), b.splitlines())
 	print '\n'.join(list(diff))

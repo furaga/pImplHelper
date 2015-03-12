@@ -216,7 +216,10 @@
     <None Include="scripts\.git\objects\fc\c93d76b22297ed7a6de61c5694e1dc11d5e8d5" />
     <None Include="scripts\.git\refs\heads\master" />
     <None Include="scripts\.git\sourcetreeconfig" />
-    <None Include="scripts\pimpl.pyc" />
+    <None Include="scripts\gen_class.pyc" />
+    <None Include="scripts\make_pimpl.pyc" />
+    <None Include="scripts\make_unpimpl.pyc" />
+    <None Include="scripts\wrap_method.pyc" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
@@ -235,12 +238,15 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\Package.ico" />
-    <Content Include="scripts\pimpl.py">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Content Include="scripts\gen_class.py" />
+    <Content Include="scripts\libclang.dll" />
+    <Content Include="scripts\make_pimpl.py" />
+    <Content Include="scripts\make_unpimpl.py" />
+    <Resource Include="scripts\out.txt" />
     <Content Include="scripts\TestCodes\SampleClass.cpp" />
     <Content Include="scripts\TestCodes\SampleClass.h" />
     <Content Include="scripts\test_pimpl.py" />
+    <Content Include="scripts\wrap_method.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="scripts\.git\objects\info\" />

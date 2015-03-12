@@ -32,7 +32,7 @@ def get_public_methods(klass, code):
 	for n in list(klass.get_children()):
 		if n.kind == CursorKind.CXX_ACCESS_SPEC_DECL:
 			accessor = code[n.extent.start.offset:n.extent.end.offset].strip()
-		elif accessor == 'public:':
+		elif accessor == 'public:' or accessor == 'protected:':
 			if n.kind in method_kinds:
 				methods.append(n)
 	return methods
@@ -130,7 +130,7 @@ def gen_header_wrap_code(tu, klass, methods, code):
 	parent_nodes = list(parent.get_children())
 	for n in parent_nodes:
 		if n.kind == CursorKind.CXX_ACCESS_SPEC_DECL:
-			if accessor == 'public:':
+			if accessor == 'public:' or accessor == 'protected:':
 				insert_pos = n.extent.start.offset
 				break
 			accessor = code[n.extent.start.offset:n.extent.end.offset].strip()

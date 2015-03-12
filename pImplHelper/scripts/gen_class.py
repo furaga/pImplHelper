@@ -8,6 +8,7 @@ import gc
 def gen_new_class(class_name):
 	header_name_template = """<%ClassName%>.h"""
 	header_code_template = """#pragma once
+#include <memory>
 
 class <%ClassName%>
 {
@@ -17,7 +18,7 @@ public:
 	void f();
 private:
 	class Impl;
-	Impl* pImpl;
+	std::unique_ptr<Impl> pImpl;
 };
 """
 	cpp_name_template = """<%ClassName%>.cpp"""
@@ -60,15 +61,12 @@ public:
 };
 
 <%ClassName%>::<%ClassName%>()
+	: pImpl(new <%ClassName%>::Impl())
 {
-	pImpl = new <%ClassName%>::Impl();
 	pImpl->SetParent(this);
 }
 <%ClassName%>::~<%ClassName%>()
 {
-	if (pImpl != nullptr)
-		delete pImpl;
-	pImpl = nullptr;
 }
 void <%ClassName%>::f()
 {
