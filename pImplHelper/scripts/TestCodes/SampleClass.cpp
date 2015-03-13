@@ -53,7 +53,7 @@ SampleClass::~SampleClass()
 		delete pImpl;
 	pImpl = nullptr;
 }
-void SampleClass::f(int a, int b)
+const void SampleClass::f(int a, int b)
 {
 	pImpl->f(a, b);
 }

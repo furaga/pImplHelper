@@ -24,7 +24,7 @@ def gen_header_wrap_code(tu, klass, methods, code):
 				break
 			accessor = code[n.extent.start.offset:n.extent.end.offset].strip()
 	if insert_pos < 0:
-		insert_pos = code.rfind('};', parent.extent.end.offset)
+		insert_pos = code[:parent.extent.end.offset].rfind('}')
 
 	insert_methods = [m for m in methods if m.spelling != 'SetParent']
 
@@ -62,7 +62,7 @@ def gen_header_wrap_code(tu, klass, methods, code):
 			add = add[:p] + class_name + add[p + len('Impl'):]
 		text += add
 
-	return (text, insert_pos);
+	return (text, insert_pos)
 
 def gen_cpp_wrap_code(tu, klass, methods, code):
 	insert_pos = len(code)

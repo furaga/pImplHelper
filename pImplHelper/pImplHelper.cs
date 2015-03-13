@@ -42,23 +42,14 @@ namespace Company.pImplHelper
             };
             return ls;
         }
-
-        static bool WrapMethod_python(string header, string cpp, int selectStart, int selectEnd, out string outheader, out string outcpp)
+        static bool RunCPython(string rootDir, string arguments, ref string outheader, ref string outcpp)
         {
-            outheader = outcpp = "";
             try
             {
-                // todo: cpythonをかわりに使う。ironpythonはlibclang.dllの関数を実行しようとするとnotimplementederrorがでる
-                string rootDir = System.IO.Path.GetDirectoryName(gen_class_scriptPath);
-                System.IO.Directory.CreateDirectory(System.IO.Path.Combine(rootDir, "tmp"));
-                System.IO.File.WriteAllText(System.IO.Path.Combine(rootDir, "tmp", "__dummy__.h"), header);
-                System.IO.File.WriteAllText(System.IO.Path.Combine(rootDir, "tmp", "__dummy__.cpp"), cpp);
-
                 System.Diagnostics.ProcessStartInfo psInfo = new System.Diagnostics.ProcessStartInfo();
 
                 psInfo.FileName = "python.exe"; // 実行するファイル
-                // psInfo.Arguments = "pimpl.py new_class";
-                psInfo.Arguments = "wrap_method.py tmp/__dummy__.h tmp/__dummy__.cpp " + selectStart + " " + selectEnd;
+                psInfo.Arguments = arguments;
                 psInfo.CreateNoWindow = true; // コンソール・ウィンドウを開かない
                 psInfo.UseShellExecute = false; // シェル機能を使用しない
                 psInfo.RedirectStandardOutput = true; // 標準出力をリダイレクト
@@ -89,6 +80,24 @@ namespace Company.pImplHelper
                     outcpp = snippets[snippets.Count - 1];
                 }
             }
+            catch (Exception)
+            {
+            }
+            return true;
+        }
+        static bool WrapMethod_python(string header, string cpp, int selectStart, int selectEnd, out string outheader, out string outcpp)
+        {
+            outheader =header;
+            outcpp = cpp;
+            try
+            {
+                string rootDir = System.IO.Path.GetDirectoryName(gen_class_scriptPath);
+                System.IO.Directory.CreateDirectory(System.IO.Path.Combine(rootDir, "tmp"));
+                System.IO.File.WriteAllText(System.IO.Path.Combine(rootDir, "tmp", "__dummy__.h"), header);
+                System.IO.File.WriteAllText(System.IO.Path.Combine(rootDir, "tmp", "__dummy__.cpp"), cpp);
+                string arguments = "wrap_method.py tmp/__dummy__.h tmp/__dummy__.cpp " + selectStart + " " + selectEnd;
+                RunCPython(rootDir, arguments, ref outheader, ref outcpp);
+            }
             catch (Exception ex)
             {
                 outheader = header;
@@ -96,7 +105,47 @@ namespace Company.pImplHelper
             }
             return true;
         }
-        
+        static bool MakePImpl_python(string header, string cpp, out string outheader, out string outcpp)
+        {
+            try
+            {
+                outheader = header;
+                outcpp = cpp;
+                string rootDir = System.IO.Path.GetDirectoryName(gen_class_scriptPath);
+                System.IO.Directory.CreateDirectory(System.IO.Path.Combine(rootDir, "tmp"));
+                System.IO.File.WriteAllText(System.IO.Path.Combine(rootDir, "tmp", "__dummy__.h"), header);
+                System.IO.File.WriteAllText(System.IO.Path.Combine(rootDir, "tmp", "__dummy__.cpp"), cpp);
+                string arguments = "make_pimpl.py tmp/__dummy__.h tmp/__dummy__.cpp ";
+                RunCPython(rootDir, arguments, ref outheader, ref outcpp);
+            }
+            catch (Exception ex)
+            {
+                outheader = header;
+                outcpp = cpp;
+            }
+            return true;
+        }
+        static bool MakeNonPImpl_python(string header, string cpp, out string outheader, out string outcpp)
+        {
+            try
+            {
+                outheader = header;
+                outcpp = cpp;
+                string rootDir = System.IO.Path.GetDirectoryName(gen_class_scriptPath);
+                System.IO.Directory.CreateDirectory(System.IO.Path.Combine(rootDir, "tmp"));
+                System.IO.File.WriteAllText(System.IO.Path.Combine(rootDir, "tmp", "__dummy__.h"), header);
+                System.IO.File.WriteAllText(System.IO.Path.Combine(rootDir, "tmp", "__dummy__.cpp"), cpp);
+                string arguments = "make_nonpimpl.py tmp/__dummy__.h tmp/__dummy__.cpp ";
+                RunCPython(rootDir, arguments, ref outheader, ref outcpp);
+            }
+            catch (Exception ex)
+            {
+                outheader = header;
+                outcpp = cpp;
+            }
+            return true;
+        }
+
         //-----------------------------------------------------------------------
         // 新規クラスの生成
         //-----------------------------------------------------------------------
@@ -157,6 +206,9 @@ namespace Company.pImplHelper
                     // 書き出し
                     System.IO.File.WriteAllText(t.path, t.code);
                     proj.ProjectItems.AddFromFile(t.path);
+
+                    // ファイルを開く
+                    VSInfo.DTE2.ItemOperations.OpenFile(t.path);
                 }
 
                 System.Windows.Forms.MessageBox.Show(
@@ -211,6 +263,9 @@ namespace Company.pImplHelper
             if (!System.IO.File.Exists(cpppath) || !System.IO.File.Exists(headerpath))
                 return false;
 
+            VSInfo.DTE2.ItemOperations.OpenFile(headerpath);
+            VSInfo.DTE2.ItemOperations.OpenFile(cpppath);
+            
             // コードを取得
             string header, cpp;
             EnvDTE.Document cppdoc, headerdoc;
@@ -225,19 +280,19 @@ namespace Company.pImplHelper
                 return false;
 
             // 書き換えたコードをファイルとエディタに反映
-            if (header != outheader)
+            if (header.Trim() != outheader.Trim())
             {
                 outheader = outheader.Replace("\n", "\r\n");
                 if (headerdoc == null)
-                    System.IO.File.WriteAllText(headerpath, outheader);
+                    ;//System.IO.File.WriteAllText(headerpath, outheader);
                 else
                     SetTextFromDocument(headerdoc, outheader);
             }
-            if (cpp != outcpp)
+            if (cpp.Trim() != outcpp.Trim())
             {
                 outcpp = outcpp.Replace("\n", "\r\n");
                 if (cppdoc == null)
-                    System.IO.File.WriteAllText(cpppath, outcpp);
+                    ;//System.IO.File.WriteAllText(cpppath, outcpp);
                 else
                     SetTextFromDocument(cppdoc, outcpp);
             }
@@ -301,5 +356,51 @@ namespace Company.pImplHelper
             return true;
         }
 
+        public static bool MakePImpl(bool toPImpl)
+        {
+            // ファイルのパス
+            var path = VSInfo.DTE2.ActiveDocument.FullName;
+            string basePath = System.IO.Path.Combine(
+                System.IO.Path.GetDirectoryName(path),
+                System.IO.Path.GetFileNameWithoutExtension(path));
+            string headerpath = basePath + ".h";
+            string cpppath = basePath + ".cpp";
+            if (!System.IO.File.Exists(cpppath) || !System.IO.File.Exists(headerpath))
+                return false;
+
+            VSInfo.DTE2.ItemOperations.OpenFile(headerpath);
+            VSInfo.DTE2.ItemOperations.OpenFile(cpppath);
+
+            // コードを取得
+            string header, cpp;
+            EnvDTE.Document cppdoc, headerdoc;
+            GetHeaderCppCode(headerpath, cpppath, out header, out headerdoc, out cpp, out cppdoc);
+
+            // コード書き換え
+            header = header.Replace("\r\n", "\n");
+            cpp = cpp.Replace("\r\n", "\n");
+            string outheader, outcpp;
+            bool res = toPImpl ? 
+                MakePImpl_python(header, cpp, out outheader, out outcpp):
+                MakeNonPImpl_python(header, cpp, out outheader, out outcpp);
+            if (res == false)
+                return false;
+
+            // 書き換えたコードをファイルとエディタに反映
+            if (header.Trim() != outheader.Trim())
+            {
+                outheader = outheader.Replace("\n", "\r\n");
+                if (headerdoc != null)
+                    SetTextFromDocument(headerdoc, outheader);
+            }
+            if (cpp.Trim() != outcpp.Trim())
+            {
+                outcpp = outcpp.Replace("\n", "\r\n");
+                if (cppdoc != null)
+                    SetTextFromDocument(cppdoc, outcpp);
+            }
+
+            return true;
+        }
     }
 }

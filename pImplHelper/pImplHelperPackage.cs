@@ -28,7 +28,11 @@ namespace Company.pImplHelper
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             if (null != mcs)
             {
-                foreach (var cmdid in new[] { PkgCmdIDList.cmdidPImplHelper_GenClass, PkgCmdIDList.cmdidPImplHelper_WrapMethod })
+                foreach (var cmdid in new[] {
+                    PkgCmdIDList.cmdidPImplHelper_GenClass, 
+                    PkgCmdIDList.cmdidPImplHelper_WrapMethod,
+                    PkgCmdIDList.cmdidPImplHelper_MakePImpl,
+                    PkgCmdIDList.cmdidPImplHelper_MakeNonPImpl })
                 {
                     CommandID menuCommandID = new CommandID(GuidList.guidpImplHelperCmdSet, (int)cmdid);
                     MenuCommand menuItem = new MenuCommand(MenuItemCallback, menuCommandID);
@@ -49,6 +53,12 @@ namespace Company.pImplHelper
                     break;
                 case PkgCmdIDList.cmdidPImplHelper_WrapMethod:
                     pImplHelper.WrapMethod();
+                    break;
+                case PkgCmdIDList.cmdidPImplHelper_MakePImpl:
+                    pImplHelper.MakePImpl(true);
+                    break;
+                case PkgCmdIDList.cmdidPImplHelper_MakeNonPImpl:
+                    pImplHelper.MakePImpl(false);
                     break;
             }
         }

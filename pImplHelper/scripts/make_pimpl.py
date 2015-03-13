@@ -36,6 +36,9 @@ def convert(header, cpp):
 	outheader = header
 	outcpp = cpp
 
+	if '::Impl' in cpp:
+		return (outheader, outcpp)
+
 	# init
 	code = header + '\n' + cpp
 
@@ -153,18 +156,45 @@ def convert(header, cpp):
 			t_header2 += line + '\n'
 
 	# Implのクラス・インスタンスの宣言
+	_p = t_header2.find('#pragma once')
+	if _p >= 0:
+		_p = t_header2.find('\n', _p) + 1
+		t_header2 = t_header2[:_p] + '#include <memory>\n' + t_header2[_p:]
 	_p = t_header2.find('{') + 1
 	t_header2 = t_header2[:_p] + """
 	class Impl;
 	std::unique_ptr<Impl> pImpl;""" + t_header2[_p:]
-	
+
+
+	comment_ranges = []
+	_p = 0
+	while _p < len(t_cpp):
+		_s = t_cpp.find('/*', _p)
+		if _s >= 0:
+			_e = t_cpp.find('*/', _s)
+			if _e < 0:
+				_e = len(t_cpp)
+			comment_ranges.append((_s, _e))
+		else:
+			break
+		_p = _e
+
 	# ::ImplをCPPファイルに書き出し
 	t_cpp = t_cpp.strip() + '\n'
-	p = t_cpp.find('\n', t_cpp.rfind('#include ')) + 1
+	p = len(t_cpp) - 1
+	while p >= 0:
+		p = t_cpp[:p].rfind('#include ')
+		if p < 0:
+			p = 0
+			break
+		if not [r for r in comment_ranges if r[0] <= p and p <= r[1]]:
+			break
+
+	p = t_cpp.find('\n', p + 1) + 1
 	t_cpp = t_cpp[:p] + '\n' + impl_code + t_cpp[p:]
 
-	# ::Implに移したpublic関数をwrapする
 	res = wrap_method.from_selection(t_header2, t_cpp, 0, len(t_cpp))
+
 	return (res[0], res[1])
 
 

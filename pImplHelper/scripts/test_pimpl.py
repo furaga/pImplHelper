@@ -19,6 +19,7 @@ class Test(unittest.TestCase):
 	def setUp(self):
 		self.input = Input('TestCodes/SampleClass.h', 'TestCodes/SampleClass.cpp')
 		self.input_nonpimpl = Input('TestCodes/SampleClass_nonpimpl.h', 'TestCodes/SampleClass_nonpimpl.cpp')
+		self.input_hoge = Input('TestCodes/Hoge.h', 'TestCodes/Hoge.cpp')
 		
 	def teadDown(self):
 		pass
@@ -63,6 +64,13 @@ class Test(unittest.TestCase):
 		# print '*' * 40
 		# print outcpp
 		# print '/' * 40
+
+		(outheader, outcpp) = make_pimpl.convert(self.input_hoge.header, self.input_hoge.cpp)
+		print '*' * 40
+		print outheader
+		print '*' * 40
+		print outcpp
+		print '*' * 40
 		assert ('class Impl;' in outheader)
 		assert ('::Impl' in outcpp)
 		pass
@@ -71,7 +79,12 @@ class Test(unittest.TestCase):
 	# test: make nonpimpl
 	###################################################################333
 	def test_make_nonpimpl(self):
-		(outheader, outcpp) = make_nonpimpl.convert(self.input.header, self.input.cpp)
+		(header, cpp) = wrap_method.from_selection(
+			self.input.header, 
+			self.input.cpp, 
+			0,
+			len(self.input.cpp))
+		(outheader, outcpp) = make_nonpimpl.convert(header, cpp)
 		assert not ('class Impl;' in outheader)
 		assert not ('::Impl' in outcpp)
 		pass
