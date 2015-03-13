@@ -127,29 +127,52 @@ def from_selection(header, cpp, sel_start, sel_end):
     klass = util.get_impl_class_cursor(tu_nodes)
     methods = util.get_methods(klass, cpp, ['public:'])
     selecting_methods = [m for m in methods if m.extent.start.offset < sel_end and sel_start < m.extent.end.offset]
+
     (header_text, header_pos) = gen_header_wrap_code(cpp_tu, klass, selecting_methods, cpp)
     (cpp_text, cpp_pos) = gen_cpp_wrap_code(cpp_tu, klass, selecting_methods, cpp)
+
     out_header = out_header[:header_pos] + header_text + out_header[header_pos:]
     cpp_pos -= len(header + '\n')
     out_cpp = out_cpp[:cpp_pos] + cpp_text + out_cpp[cpp_pos:]
     return (out_header, out_cpp)
 
+import os
+import codecs
+import datetime
 
-if len(sys.argv) == 5:    
+def convert_index_by_encoding(encoding, idx, code):
+    txt = code.decode(encoding)[:idx].encode(encoding)
+    return len(txt)
+
+if len(sys.argv) == 5:  
     f = open(sys.argv[1])
-    header = f.read() 
+    header = f.read()
     f.close()
 
     f = open(sys.argv[2])
-    cpp = f.read() 
+    cpp = f.read()
     f.close()
 
-    sel_start = int(sys.argv[3])
-    sel_end = int(sys.argv[4])
+    # UTF8で保存されたソースコードへのパス
+    sel_start_utf8 = int(sys.argv[3])
+    sel_start = convert_index_by_encoding('utf8', sel_start_utf8, cpp)
+
+    sel_end_utf8 = int(sys.argv[4])
+    sel_end = convert_index_by_encoding('utf8', sel_end_utf8, cpp)
+
     res = from_selection(header, cpp, sel_start, sel_end)
 
-    print '*' * 40
-    print res[0]
-    print '*' * 40
-    print res[1]
-    print '*' * 40
+    if not os.path.exists("output"):
+        os.mkdir("output")
+
+    basepath = "output/__wrap_method__" + datetime.datetime.today().strftime("%Y-%m-%d-%H-%M-%S")
+
+    f = open(basepath + '.h', 'w')
+    f.write(res[0])
+    f.close()
+
+    f = open(basepath + '.cpp', 'w')
+    f.write(res[1])
+    f.close()
+
+    print ',' + basepath + '.h,' + basepath + '.cpp'

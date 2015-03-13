@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define REDIRECT_PYTHON
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,7 +22,7 @@ namespace Company.pImplHelper
         {
             get
             {
-#if DEBUG
+#if _DEBUG
                 string path = "scripts/gen_class.py";
 #else
                 string root = System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -56,7 +58,7 @@ namespace Company.pImplHelper
                 psInfo.WorkingDirectory = rootDir;
                 System.Diagnostics.Process p = System.Diagnostics.Process.Start(psInfo); // アプリの実行開始
                 string output = p.StandardOutput.ReadToEnd(); // 標準出力の読み取り
-
+#if REDIRECT_PYTHON
                 List<string> snippets = new List<string>();
                 string snip = "";
                 const string splitLine = "****************************************"; // "*" * 40
@@ -79,6 +81,19 @@ namespace Company.pImplHelper
                     outheader = snippets[snippets.Count - 2];
                     outcpp = snippets[snippets.Count - 1];
                 }
+#else
+                var tokens = output.Trim().Split(',');
+                if (tokens.Length >= 2)
+                {
+                    var pathH = System.IO.Path.Combine(rootDir, tokens[tokens.Length - 2]);
+                    if (System.IO.File.Exists(pathH))
+                        outheader = System.IO.File.ReadAllText(pathH);
+                    var pathCPP = System.IO.Path.Combine(rootDir, tokens[tokens.Length - 1]);
+                    if (System.IO.File.Exists(pathCPP))
+                        outcpp = System.IO.File.ReadAllText(pathCPP);
+                }
+#endif
+
             }
             catch (Exception)
             {
@@ -282,7 +297,9 @@ namespace Company.pImplHelper
             // 書き換えたコードをファイルとエディタに反映
             if (header.Trim() != outheader.Trim())
             {
+#if REDIRECT_PYTHON
                 outheader = outheader.Replace("\n", "\r\n");
+#endif
                 if (headerdoc == null)
                     ;//System.IO.File.WriteAllText(headerpath, outheader);
                 else
@@ -290,7 +307,9 @@ namespace Company.pImplHelper
             }
             if (cpp.Trim() != outcpp.Trim())
             {
+#if REDIRECT_PYTHON
                 outcpp = outcpp.Replace("\n", "\r\n");
+#endif
                 if (cppdoc == null)
                     ;//System.IO.File.WriteAllText(cpppath, outcpp);
                 else
@@ -389,13 +408,17 @@ namespace Company.pImplHelper
             // 書き換えたコードをファイルとエディタに反映
             if (header.Trim() != outheader.Trim())
             {
+#if REDIRECT_PYTHON
                 outheader = outheader.Replace("\n", "\r\n");
+#endif
                 if (headerdoc != null)
                     SetTextFromDocument(headerdoc, outheader);
             }
             if (cpp.Trim() != outcpp.Trim())
             {
+#if REDIRECT_PYTHON
                 outcpp = outcpp.Replace("\n", "\r\n");
+#endif
                 if (cppdoc != null)
                     SetTextFromDocument(cppdoc, outcpp);
             }

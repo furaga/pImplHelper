@@ -66,11 +66,6 @@ class Test(unittest.TestCase):
         # print '/' * 40
 
         (outheader, outcpp) = make_pimpl.convert(self.input_hoge.header, self.input_hoge.cpp)
-        print '*' * 40
-        print outheader
-        print '*' * 40
-        print outcpp
-        print '*' * 40
         assert ('class Impl;' in outheader)
         assert ('::Impl' in outcpp)
         pass

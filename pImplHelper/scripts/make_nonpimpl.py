@@ -132,24 +132,55 @@ def convert(header, cpp):
 
     outheader = re.sub(r'\s+;', ';', outheader)
     outcpp = re.sub(r'\s+;', ';', outcpp)
-    outcpp = outcpp.replace(': pImpl(new Hoge::Impl())', '')
+    outcpp = outcpp.replace(': pImpl(new ' + parent.spelling + '::Impl())', '')
 
     return (outheader, outcpp)
 
 
-if len(sys.argv) == 3:    
-    f = open(sys.argv[1])
-    header = f.read() 
+# if len(sys.argv) == 3:    
+#     f = open(sys.argv[1])
+#     header = f.read() 
+#     f.close()
+
+#     f = open(sys.argv[2])
+#     cpp = f.read() 
+#     f.close()
+
+#     res = convert(header, cpp)
+
+#     print '*' * 40
+#     print res[0]
+#     print '*' * 40
+#     print res[1]
+#     print '*' * 40
+
+
+import os
+import codecs
+import datetime
+
+if len(sys.argv) == 3:  
+    f = codecs.open(sys.argv[1])
+    header = f.read()
     f.close()
 
-    f = open(sys.argv[2])
-    cpp = f.read() 
+    f = codecs.open(sys.argv[2])
+    cpp = f.read()
     f.close()
 
     res = convert(header, cpp)
 
-    print '*' * 40
-    print res[0]
-    print '*' * 40
-    print res[1]
-    print '*' * 40
+    if not os.path.exists("output"):
+        os.mkdir("output")
+
+    basepath = "output/__make_nonpimpl__" + datetime.datetime.today().strftime("%Y-%m-%d-%H-%M-%S")
+
+    f = open(basepath + '.h', 'w')
+    f.write(res[0])
+    f.close()
+
+    f = open(basepath + '.cpp', 'w')
+    f.write(res[1])
+    f.close()
+
+    print ',' + basepath + '.h,' + basepath + '.cpp'

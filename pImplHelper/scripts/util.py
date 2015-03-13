@@ -202,17 +202,6 @@ def get_methods(klass, code, accessors):
                 methods.append(n)
     return methods
 
-def get_(klass, code, accessors):
-    methods = []
-    accessor = 'private:'
-    for n in list(klass.get_children()):
-        if n.kind == CursorKind.CXX_ACCESS_SPEC_DECL:
-            accessor = code[n.extent.start.offset:n.extent.end.offset].strip()
-        elif accessor in accessors:
-            if n.kind in method_kinds:
-                methods.append(n)
-    return methods
-
 def get_arg_types(arg_ranges, code):
     types = []
     for r in arg_ranges:
